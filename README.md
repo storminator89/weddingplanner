@@ -1,70 +1,55 @@
-# Getting Started with Create React App
+# Hochzeit Tischplaner
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Ein interaktiver Tischplaner für Hochzeiten, erstellt mit React. Mit dieser Anwendung können Sie Gäste hinzufügen, ihre Verträglichkeit untereinander festlegen und sie den Tischen zuweisen. 
 
-## Available Scripts
+## Features
 
-In the project directory, you can run:
+- Gäste hinzufügen und entfernen
+- Verträglichkeit zwischen Gästen festlegen
+- Tische hinzufügen, bearbeiten und entfernen
+- Gäste per Drag-and-Drop den Tischen zuweisen
+- Verbleibende Gäste automatisch den Tischen zuweisen
+- Export der Tischbelegung als PDF
 
-### `npm start`
+## Screenshot
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+![Tischplaner](tischplaner.png)
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Installation
 
-### `npm test`
+1. Klone das Repository:
+    ```sh
+    git clone https://github.com/your-username/wedding-seating-planner.git
+    ```
+2. Wechsel in das Projektverzeichnis:
+    ```sh
+    cd wedding-seating-planner
+    ```
+3. Installiere die Abhängigkeiten:
+    ```sh
+    npm install
+    ```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Nutzung
 
-### `npm run build`
+1. Starte die Anwendung:
+    ```sh
+    npm start
+    ```
+2. Öffne deinen Browser und gehe zu `http://localhost:3000`.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Aufbau
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+- **`src/App.js`**: Hauptkomponente der Anwendung
+- **`src/App.css`**: Stylesheet für die Anwendung
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Technologien
 
-### `npm run eject`
+- React
+- jsPDF
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## Mitwirken
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+Beiträge sind willkommen! Bitte eröffne ein Issue, um ein neues Feature vorzuschlagen oder einen Fehler zu melden. 
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
