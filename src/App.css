@@ -60,6 +60,9 @@
 }
 
 .guestItem {
+  display: flex; 
+  align-items: center; 
+  justify-content: space-between; 
   background-color: #fff;
   padding: 1rem;
   margin-bottom: 1rem;
@@ -69,22 +72,45 @@
   transition: all 0.2s ease-in-out;
 }
 
+.guestName {
+  font-size: 1.25rem; 
+  font-weight: bold; 
+  flex: 1;
+}
+
 .compatibilityContainer {
   margin-top: 0.5rem;
+  flex: 2; 
+}
+
+.compatibilityTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.compatibilityTable th, .compatibilityTable td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+.compatibilityTable th {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  text-align: left;
+  background-color: #f2f2f2;
+  color: #333;
 }
 
 .compatibilitySelect {
+  width: 100%;
   padding: 0.25rem;
   font-size: 0.875rem;
   border: 1px solid #ced4da;
   border-radius: 4px;
-  margin-left: 0.5rem;
   appearance: none;
-  padding-right: 1.5rem;
   background-repeat: no-repeat;
   background-position: right 0.5rem center;
   background-size: 0.65em auto;
-  width: 100%;
 }
 
 .tableCard {
@@ -157,12 +183,15 @@
 
 .removeButton {
   padding: 0.25rem 0.5rem;
+  margin-right: 0.75rem;
   font-size: 0.875rem;
   background-color: #e74c3c;
   color: #fff;
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
 }
 
 .icon {
@@ -194,7 +223,6 @@
   cursor: pointer;
   font-size: 0.875rem; 
 }
-
 
 .tableNameInput {
   flex: 1;

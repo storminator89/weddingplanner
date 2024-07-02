@@ -251,7 +251,6 @@ const WeddingSeatingPlanner = () => {
     doc.save("Tischbelegung.pdf");
 };
 
-
   return (
     <div className="appContainer">
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
@@ -280,12 +279,12 @@ const WeddingSeatingPlanner = () => {
           placeholder="Neuer Tischname"
         />
         <input
-          className="input"
-          style={{ width: '60px' }}
+          className="input seatsInput"
           type="number"
           value={newTableSeats}
           onChange={(e) => setNewTableSeats(parseInt(e.target.value))}
           min="1"
+          placeholder="Sitzplätze"
         />
         <button className="button" style={{ backgroundColor: '#27ae60' }} onClick={addNewTable}>
           <i className="fas fa-plus-circle icon"></i>
@@ -305,39 +304,44 @@ const WeddingSeatingPlanner = () => {
               draggable
               onDragStart={() => handleDragStart(guest)}
             >
-              <div>{guest.name}</div>
+              <div className="guestName">{guest.name}</div>
               <button 
                 className="removeButton"
                 onClick={() => removeGuestFromList(guest.id)}
               >
                 <i className="fas fa-user-minus icon"></i>
-                Entfernen
               </button>
               <div className="compatibilityContainer">
-                Verträglichkeit:
-                {guests.filter(g => g.id !== guest.id).map(otherGuest => (
-                  <div key={otherGuest.id} style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
-                    <span style={{ flex: 1 }}>{otherGuest.name}:</span>
-                    <select
-                      className="compatibilitySelect"
-                      style={{
-                        backgroundColor: getCompatibilityColor(guest.id, otherGuest.id),
-                        color: compatibility[guest.id]?.[otherGuest.id] ? '#fff' : '#333',
-                        backgroundImage: `url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23${compatibility[guest.id]?.[otherGuest.id] ? 'FFFFFF' : '333333'}%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")`,
-                      }}
-                      value={compatibility[guest.id]?.[otherGuest.id] || ''}
-                      onChange={(e) => updateCompatibility(guest.id, otherGuest.id, e.target.value)}
-                    >
-                      <option value="">Wählen</option>
-                      <option value="good">
-                        Gut
-                      </option>
-                      <option value="bad">
-                        Schlecht
-                      </option>
-                    </select>
-                  </div>
-                ))}
+                <table className="compatibilityTable">
+                  <thead>
+                    <tr>
+                      <th>Verträgt sich mit</th>
+                      <th>Bewertung</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {guests.filter(g => g.id !== guest.id).map(otherGuest => (
+                      <tr key={otherGuest.id}>
+                        <td>{otherGuest.name}</td>
+                        <td>
+                          <select
+                            className="compatibilitySelect"
+                            style={{
+                              backgroundColor: getCompatibilityColor(guest.id, otherGuest.id),
+                              color: compatibility[guest.id]?.[otherGuest.id] ? '#fff' : '#333',
+                            }}
+                            value={compatibility[guest.id]?.[otherGuest.id] || ''}
+                            onChange={(e) => updateCompatibility(guest.id, otherGuest.id, e.target.value)}
+                          >
+                            <option value="">Wählen</option>
+                            <option value="good">Gut</option>
+                            <option value="bad">Schlecht</option>
+                          </select>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           ))}
@@ -382,6 +386,7 @@ const WeddingSeatingPlanner = () => {
                     value={table.seats}
                     onChange={(e) => updateTableSeats(table.id, parseInt(e.target.value))}
                     min="1"
+                    placeholder="Sitzplätze"
                   />
                   <i className="fas fa-chair seatsInputIcon"></i>
                 </div>
@@ -404,7 +409,6 @@ const WeddingSeatingPlanner = () => {
                     onClick={() => removeGuestFromTable(table.id, guest.id)}
                   >
                     <i className="fas fa-user-minus icon"></i>
-                    Entfernen
                   </button>
                 </div>
               ))}
