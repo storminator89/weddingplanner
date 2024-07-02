@@ -1,6 +1,6 @@
 # Hochzeit Tischplaner
 
-Ein interaktiver Tischplaner für Hochzeiten, erstellt mit React. Mit dieser Anwendung können Sie Gäste hinzufügen, ihre Verträglichkeit untereinander festlegen und sie den Tischen zuweisen. 
+Ein interaktiver Tischplaner für Hochzeiten, erstellt mit React. Mit dieser Anwendung können Sie Gäste hinzufügen, ihre Verträglichkeit untereinander festlegen und sie automatisch den Tischen zuweisen. 
 
 ## Features
 
@@ -19,11 +19,11 @@ Ein interaktiver Tischplaner für Hochzeiten, erstellt mit React. Mit dieser Anw
 
 1. Klone das Repository:
     ```sh
-    git clone https://github.com/your-username/wedding-seating-planner.git
+    git clone https://github.com/storminator89/weddingplanner.git
     ```
 2. Wechsel in das Projektverzeichnis:
     ```sh
-    cd wedding-seating-planner
+    cd weddingplanner
     ```
 3. Installiere die Abhängigkeiten:
     ```sh
