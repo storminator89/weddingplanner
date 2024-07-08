@@ -1,457 +1,170 @@
-import React, { useState } from 'react';
-import './App.css';  // Importiere die CSS-Datei
-import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import React, { useState, useEffect } from 'react';
+import { DragDropContext } from 'react-beautiful-dnd';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUserPlus, faPlusCircle, faRandom, faFilePdf, faSun, faMoon } from '@fortawesome/free-solid-svg-icons';
+import './index.css';
+import {
+  addGuest,
+  addNewTable,
+  handleGuestKeyDown,
+  handleTableKeyDown,
+  assignRemainingGuests,
+  exportPDF,
+  handleConfirmAddGuest,
+  handleCancelDrop,
+  onDragEnd
+} from './helpers';
+import GuestList from './GuestList';
+import TableList from './TableList';
+import WarningPopup from './WarningPopup';
+import ProgressBar from './ProgressBar';
 
 const WeddingSeatingPlanner = () => {
   const [guests, setGuests] = useState([]);
   const [tables, setTables] = useState([
-    { id: 'table1', name: 'Tisch 1', guests: [], seats: 4 },
-    { id: 'table2', name: 'Tisch 2', guests: [], seats: 4 },
+    { id: 'table1', name: 'Tisch 1', guests: [], seats: 8 },
+    { id: 'table2', name: 'Tisch 2', guests: [], seats: 8 },
   ]);
   const [newGuest, setNewGuest] = useState('');
   const [compatibility, setCompatibility] = useState({});
   const [newTableName, setNewTableName] = useState('');
-  const [newTableSeats, setNewTableSeats] = useState(4);
-  const [editingTableId, setEditingTableId] = useState(null);
-  const [editingTableName, setEditingTableName] = useState('');
-  const [draggingGuest, setDraggingGuest] = useState(null);
+  const [newTableSeats, setNewTableSeats] = useState(8);
   const [showWarning, setShowWarning] = useState(false);
   const [warningMessage, setWarningMessage] = useState('');
   const [pendingGuest, setPendingGuest] = useState(null);
   const [pendingTable, setPendingTable] = useState(null);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [progress, setProgress] = useState(0);
 
-  const addGuest = () => {
-    if (newGuest.trim() !== '') {
-      const newGuestObj = { id: `guest-${Date.now()}`, name: newGuest.trim() };
-      setGuests([...guests, newGuestObj]);
-      setNewGuest('');
-      setCompatibility((prev) => ({
-        ...prev,
-        [newGuestObj.id]: {},
-      }));
-    }
+  useEffect(() => {
+    const totalGuests = guests.length + tables.reduce((sum, table) => sum + table.guests.length, 0);
+    const seatedGuests = tables.reduce((sum, table) => sum + table.guests.length, 0);
+    setProgress(totalGuests > 0 ? (seatedGuests / totalGuests) * 100 : 0);
+  }, [guests, tables]);
+
+  const handleDragEnd = (result) => {
+    onDragEnd(result, guests, setGuests, tables, setTables, compatibility, setShowWarning, setWarningMessage, setPendingGuest, setPendingTable);
   };
 
-  const handleGuestKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      addGuest();
-    }
+  const handleCancel = () => {
+    handleCancelDrop(setShowWarning, setWarningMessage, setPendingGuest, setPendingTable);
   };
 
-  const addNewTable = () => {
-    if (newTableName.trim() !== '') {
-      const newTable = {
-        id: `table-${Date.now()}`,
-        name: newTableName.trim(),
-        guests: [],
-        seats: newTableSeats,
-      };
-      setTables([...tables, newTable]);
-      setNewTableName('');
-      setNewTableSeats(4);
-    }
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode);
   };
-
-  const handleTableKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      addNewTable();
-    }
-  };
-
-  const removeGuestFromList = (guestId) => {
-    setGuests(guests.filter((g) => g.id !== guestId));
-    const updatedTables = tables.map((table) => ({
-      ...table,
-      guests: table.guests.filter((g) => g.id !== guestId),
-    }));
-    setTables(updatedTables);
-  };
-
-  const updateCompatibility = (guest1Id, guest2Id, value) => {
-    setCompatibility((prev) => ({
-      ...prev,
-      [guest1Id]: {
-        ...prev[guest1Id],
-        [guest2Id]: value,
-      },
-      [guest2Id]: {
-        ...prev[guest2Id],
-        [guest1Id]: value,
-      },
-    }));
-  };
-
-  const getCompatibilityColor = (guest1Id, guest2Id) => {
-    const compatibilityValue = compatibility[guest1Id]?.[guest2Id];
-    if (compatibilityValue === 'good') return '#27ae60';
-    if (compatibilityValue === 'bad') return '#e74c3c';
-    return '#95a5a6';
-  };
-
-  const updateTableSeats = (tableId, newSeats) => {
-    const updatedTables = tables.map((table) => {
-      if (table.id === tableId) {
-        return { ...table, seats: newSeats };
-      }
-      return table;
-    });
-    setTables(updatedTables);
-  };
-
-  const startEditingTable = (tableId, currentName) => {
-    setEditingTableId(tableId);
-    setEditingTableName(currentName);
-  };
-
-  const saveTableName = (tableId) => {
-    const updatedTables = tables.map((table) => {
-      if (table.id === tableId) {
-        return { ...table, name: editingTableName };
-      }
-      return table;
-    });
-    setTables(updatedTables);
-    setEditingTableId(null);
-    setEditingTableName('');
-  };
-
-  const removeTable = (tableId) => {
-    const removedTable = tables.find((t) => t.id === tableId);
-    setTables(tables.filter((table) => table.id !== tableId));
-    setGuests([...guests, ...removedTable.guests]);
-  };
-
-  const removeGuestFromTable = (tableId, guestId) => {
-    const updatedTables = tables.map((table) => {
-      if (table.id === tableId) {
-        return {
-          ...table,
-          guests: table.guests.filter((g) => g.id !== guestId),
-        };
-      }
-      return table;
-    });
-    setTables(updatedTables);
-    const removedGuest = tables.find((t) => t.id === tableId).guests.find((g) => g.id === guestId);
-    setGuests([...guests, removedGuest]);
-  };
-
-  const canSitTogether = (tableGuests, newGuestId) => {
-    for (let guest of tableGuests) {
-      if (compatibility[guest.id]?.[newGuestId] === 'bad') {
-        return false;
-      }
-    }
-    return true;
-  };
-
-  const assignRemainingGuests = () => {
-    let remainingGuests = [...guests];
-    let updatedTables = [...tables];
-
-    remainingGuests.forEach((guest) => {
-      let guestAssigned = false;
-      for (let table of updatedTables) {
-        if (table.guests.length < table.seats && canSitTogether(table.guests, guest.id)) {
-          table.guests.push(guest);
-          guestAssigned = true;
-          break;
-        }
-      }
-      if (!guestAssigned) {
-        setWarningMessage(`Kein geeigneter Platz für ${guest.name}.`);
-        setShowWarning(true);
-      }
-    });
-
-    setTables(updatedTables);
-    setGuests(remainingGuests.filter((g) => !updatedTables.some((t) => t.guests.includes(g))));
-  };
-
-  const handleDragStart = (guest) => {
-    setDraggingGuest(guest);
-  };
-
-  const handleDrop = (tableId) => {
-    if (draggingGuest) {
-      const table = tables.find((table) => table.id === tableId);
-      if (table.guests.length >= table.seats) {
-        setWarningMessage(`${table.name} ist voll.`);
-        setShowWarning(true);
-        setDraggingGuest(null);
-        return;
-      }
-      const incompatibleGuests = table.guests.filter((guest) => compatibility[guest.id]?.[draggingGuest.id] === 'bad');
-      if (incompatibleGuests.length > 0) {
-        setPendingGuest(draggingGuest);
-        setPendingTable(table);
-        const incompatibleNames = incompatibleGuests.map((guest) => guest.name).join(', ');
-        setWarningMessage(`${draggingGuest.name} verträgt sich nicht mit ${incompatibleNames}. Trotzdem hinzufügen?`);
-        setShowWarning(true);
-      } else {
-        addGuestToTable(table, draggingGuest);
-      }
-      setDraggingGuest(null);
-    }
-  };
-
-  const addGuestToTable = (table, guest) => {
-    const updatedTables = tables.map((t) => {
-      if (t.id === table.id && t.guests.length < t.seats) {
-        return { ...t, guests: [...t.guests, guest] };
-      }
-      return t;
-    });
-
-    setTables(updatedTables);
-    setGuests((prevGuests) => prevGuests.filter((g) => g.id !== guest.id));
-    setShowWarning(false);
-    setWarningMessage('');
-    setPendingGuest(null);
-    setPendingTable(null);
-  };
-
-  const handleConfirmAddGuest = () => {
-    if (pendingTable && pendingGuest) {
-      addGuestToTable(pendingTable, pendingGuest);
-    }
-  };
-
-  const handleCancelDrop = () => {
-    setShowWarning(false);
-    setWarningMessage('');
-    setPendingGuest(null);
-    setPendingTable(null);
-  };
-
-  const exportPDF = () => {
-    const doc = new jsPDF();
-    tables.forEach((table) => {
-        const head = [[`Tisch: ${table.name}`, 'Verträgt sich', 'Verträgt sich nicht']];
-        const body = table.guests.map((guest) => {
-            const compatible = table.guests
-                .filter((otherGuest) => guest.id !== otherGuest.id && compatibility[guest.id]?.[otherGuest.id] === 'good')
-                .map((otherGuest) => otherGuest.name)
-                .join(', ');
-            const incompatible = table.guests
-                .filter((otherGuest) => guest.id !== otherGuest.id && compatibility[guest.id]?.[otherGuest.id] === 'bad')
-                .map((otherGuest) => otherGuest.name)
-                .join(', ');
-            return [guest.name, compatible, incompatible];
-        });
-        doc.autoTable({
-            head: head,
-            body: body,
-            theme: 'grid',
-            headStyles: { fillColor: [23, 162, 184] },
-            margin: { top: 10 },
-        });
-    });
-    doc.save("Tischbelegung.pdf");
-};
 
   return (
-    <div className="appContainer">
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
-      <h1 className="title">Tischplaner</h1>
-      <div className="inputContainer">
-        <input
-          className="input"
-          type="text"
-          value={newGuest}
-          onChange={(e) => setNewGuest(e.target.value)}
-          onKeyDown={handleGuestKeyDown}
-          placeholder="Neuen Gast hinzufügen"
-        />
-        <button className="button" onClick={addGuest}>
-          <i className="fas fa-user-plus icon"></i>
-          Gast hinzufügen
-        </button>
-      </div>
-      <div className="inputContainer">
-        <input
-          className="input"
-          type="text"
-          value={newTableName}
-          onChange={(e) => setNewTableName(e.target.value)}
-          onKeyDown={handleTableKeyDown}
-          placeholder="Neuer Tischname"
-        />
-        <input
-          className="input seatsInput"
-          type="number"
-          value={newTableSeats}
-          onChange={(e) => setNewTableSeats(parseInt(e.target.value))}
-          min="1"
-          placeholder="Sitzplätze"
-        />
-        <button className="button" style={{ backgroundColor: '#27ae60' }} onClick={addNewTable}>
-          <i className="fas fa-plus-circle icon"></i>
-          Tisch hinzufügen
-        </button>
-      </div>
-      <div className="contentContainer">
-        <div className="guestListContainer">
-          <h2 className="sectionTitle">
-            <i className="fas fa-users icon"></i>
-            Gästeliste
-          </h2>
-          {guests.map((guest) => (
-            <div 
-              key={guest.id} 
-              className="guestItem"
-              draggable
-              onDragStart={() => handleDragStart(guest)}
-            >
-              <div className="guestName">{guest.name}</div>
-              <button 
-                className="removeButton"
-                onClick={() => removeGuestFromList(guest.id)}
-              >
-                <i className="fas fa-user-minus icon"></i>
+    <DragDropContext onDragEnd={handleDragEnd}>
+      <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-100'} transition-colors duration-300`}>
+        <div className="container mx-auto p-4">
+          <header className={`bg-blue-600 text-white p-6 rounded-t-lg shadow-lg ${isDarkMode ? 'bg-opacity-80' : ''}`}>
+            <div className="flex justify-between items-center">
+              <h1 className="text-4xl font-bold">Eleganter Tischplaner</h1>
+              <button onClick={toggleDarkMode} className="p-2 rounded-full hover:bg-blue-700 transition-colors duration-300">
+                <FontAwesomeIcon icon={isDarkMode ? faSun : faMoon} />
               </button>
-              <div className="compatibilityContainer">
-                <table className="compatibilityTable">
-                  <thead>
-                    <tr>
-                      <th>Verträgt sich mit</th>
-                      <th>Bewertung</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {guests.filter(g => g.id !== guest.id).map(otherGuest => (
-                      <tr key={otherGuest.id}>
-                        <td>{otherGuest.name}</td>
-                        <td>
-                          <select
-                            className="compatibilitySelect"
-                            style={{
-                              backgroundColor: getCompatibilityColor(guest.id, otherGuest.id),
-                              color: compatibility[guest.id]?.[otherGuest.id] ? '#fff' : '#333',
-                            }}
-                            value={compatibility[guest.id]?.[otherGuest.id] || ''}
-                            onChange={(e) => updateCompatibility(guest.id, otherGuest.id, e.target.value)}
-                          >
-                            <option value="">Wählen</option>
-                            <option value="good">Gut</option>
-                            <option value="bad">Schlecht</option>
-                          </select>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
             </div>
-          ))}
-        </div>
-        <div className="tablesContainer">
-          {tables.map((table) => (
-            <div 
-              key={table.id} 
-              className="tableCard"
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={() => handleDrop(table.id)}
-            >
-              <div className="tableTitle">
-                {editingTableId === table.id ? (
-                  <>
-                    <i className="fas fa-pencil-alt icon editIcon"></i>
+          </header>
+          <main className={`bg-white shadow-2xl rounded-b-lg overflow-hidden transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : ''}`}>
+            <div className="p-6">
+              <ProgressBar progress={progress} />
+              <div className="mb-8 space-y-4">
+                <div className="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0">
+                  <div className="flex-1 flex">
                     <input
-                      className="tableNameInput"
+                      className={`flex-grow p-3 border rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
                       type="text"
-                      value={editingTableName}
-                      onChange={(e) => setEditingTableName(e.target.value)}
+                      value={newGuest}
+                      onChange={(e) => setNewGuest(e.target.value)}
+                      onKeyDown={(e) => handleGuestKeyDown(e, newGuest, guests, setGuests, setCompatibility, setNewGuest)}
+                      placeholder="Neuen Gast hinzufügen"
                     />
-                    <button className="button" onClick={() => saveTableName(table.id)}>
-                      Speichern
+                    <button 
+                      className="bg-blue-500 text-white p-3 rounded-r-lg hover:bg-blue-600 transition duration-300"
+                      onClick={() => addGuest(newGuest, guests, setGuests, setNewGuest, setCompatibility)}
+                    >
+                      <FontAwesomeIcon icon={faUserPlus} className="mr-2" />
+                      Hinzufügen
                     </button>
-                  </>
-                ) : (
-                  <>
-                    <i className="fas fa-pencil-alt icon editIcon" onClick={() => startEditingTable(table.id, table.name)}></i>
-                    <span>
-                      {table.name}
-                    </span>
-                    <button className="button" onClick={() => removeTable(table.id)}>
-                      Entfernen
-                    </button>
-                  </>
-                )}
-                <div className="seatsInputContainer">
+                  </div>
+                </div>
+                <div className="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0">
                   <input
-                    className="seatsInput"
+                    className={`flex-1 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
+                    type="text"
+                    value={newTableName}
+                    onChange={(e) => setNewTableName(e.target.value)}
+                    onKeyDown={(e) => handleTableKeyDown(e, newTableName, newTableSeats, tables, setTables, setNewTableName, setNewTableSeats)}
+                    placeholder="Neuer Tischname"
+                  />
+                  <input
+                    className={`w-24 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
                     type="number"
-                    value={table.seats}
-                    onChange={(e) => updateTableSeats(table.id, parseInt(e.target.value))}
+                    value={newTableSeats}
+                    onChange={(e) => setNewTableSeats(parseInt(e.target.value))}
                     min="1"
                     placeholder="Sitzplätze"
                   />
-                  <i className="fas fa-chair seatsInputIcon"></i>
-                </div>
-              </div>
-              {table.guests.map((guest) => (
-                <div key={guest.id} className="tableGuest">
-                  <span>{guest.name}</span>
-                  <div className="compatibilityIndicators">
-                    {table.guests.filter(g => g.id !== guest.id).map(otherGuest => (
-                      <span
-                        key={otherGuest.id}
-                        className={compatibility[guest.id]?.[otherGuest.id] === 'good' ? 'good' : 'bad'}
-                      >
-                        {otherGuest.name}
-                      </span>
-                    ))}
-                  </div>
-                  <button
-                    className="removeButton"
-                    onClick={() => removeGuestFromTable(table.id, guest.id)}
+                  <button 
+                    className="bg-green-500 text-white p-3 rounded-lg hover:bg-green-600 transition duration-300 flex-shrink-0"
+                    onClick={() => addNewTable(newTableName, newTableSeats, tables, setTables, setNewTableName, setNewTableSeats)}
                   >
-                    <i className="fas fa-user-minus icon"></i>
+                    <FontAwesomeIcon icon={faPlusCircle} className="mr-2" />
+                    Tisch erstellen
                   </button>
                 </div>
-              ))}
-              <button 
-                className="button"
-                style={{
-                  backgroundColor: table.guests.length >= table.seats ? '#ced4da' : '#4dabf7',
-                  cursor: table.guests.length >= table.seats ? 'not-allowed' : 'pointer',
-                }}
-                disabled={table.guests.length >= table.seats}
-              >
-                <i className="fas fa-user-plus icon"></i>
-                Gast hinzufügen ({table.guests.length}/{table.seats})
-              </button>
+              </div>
+              <div className="flex flex-col lg:flex-row space-y-8 lg:space-y-0 lg:space-x-8">
+                <GuestList 
+                  guests={guests} 
+                  setGuests={setGuests} 
+                  compatibility={compatibility} 
+                  setCompatibility={setCompatibility}
+                  isDarkMode={isDarkMode}
+                />
+                <TableList 
+                  tables={tables} 
+                  setTables={setTables} 
+                  guests={guests} 
+                  setGuests={setGuests} 
+                  compatibility={compatibility} 
+                  setShowWarning={setShowWarning} 
+                  setWarningMessage={setWarningMessage} 
+                  setPendingGuest={setPendingGuest} 
+                  setPendingTable={setPendingTable}
+                  isDarkMode={isDarkMode}
+                />
+              </div>
+              {showWarning && (
+                <WarningPopup 
+                  message={warningMessage} 
+                  handleConfirm={() => handleConfirmAddGuest(pendingTable, pendingGuest, tables, setTables, setGuests, setShowWarning, setPendingGuest, setPendingTable)}
+                  handleCancel={handleCancel}
+                  isDarkMode={isDarkMode}
+                />
+              )}
+              <div className="mt-8 flex flex-col md:flex-row justify-center space-y-4 md:space-y-0 md:space-x-4">
+                <button 
+                  className="bg-yellow-500 text-white px-6 py-3 rounded-lg hover:bg-yellow-600 transition duration-300 flex items-center justify-center"
+                  onClick={() => assignRemainingGuests(guests, setGuests, tables, setTables, setShowWarning, setWarningMessage, compatibility)}
+                >
+                  <FontAwesomeIcon icon={faRandom} className="mr-2" />
+                  Automatisch zuordnen
+                </button>
+                <button 
+                  className="bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 transition duration-300 flex items-center justify-center"
+                  onClick={() => exportPDF(tables, compatibility)}
+                >
+                  <FontAwesomeIcon icon={faFilePdf} className="mr-2" />
+                  Als PDF exportieren
+                </button>
+              </div>
             </div>
-          ))}
+          </main>
         </div>
       </div>
-      {showWarning && (
-        <div className="popupOverlay">
-          <div className="popupContent">
-            <p>{warningMessage}</p>
-            {pendingGuest && pendingTable && (
-              <div>
-                <button className="button" onClick={handleConfirmAddGuest}>Ja</button>
-                <button className="button" onClick={handleCancelDrop}>Nein</button>
-              </div>
-            )}
-            {!pendingGuest && (
-              <button className="button" onClick={handleCancelDrop}>OK</button>
-            )}
-          </div>
-        </div>
-      )}
-      <button className="button" style={{ backgroundColor: '#e67e22', marginTop: '2rem' }} onClick={assignRemainingGuests}>
-        <i className="fas fa-random icon"></i>
-        Verbleibende Gäste automatisch zuordnen
-      </button>
-      <button className="button" style={{ backgroundColor: '#3498db', marginTop: '1rem' }} onClick={exportPDF}>
-        <i className="fas fa-file-pdf icon"></i>
-        Tischbelegung als PDF exportieren
-      </button>
-    </div>
+    </DragDropContext>
   );
 };
 
