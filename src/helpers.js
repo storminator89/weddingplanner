@@ -120,7 +120,24 @@ export const addGuestToTable = (table, guest, tables, setTables, setGuests) => {
 
 export const handleConfirmAddGuest = (pendingTable, pendingGuest, tables, setTables, setGuests, setShowWarning, setPendingGuest, setPendingTable) => {
   if (pendingTable && pendingGuest) {
-    addGuestToTable(pendingTable, pendingGuest, tables, setTables, setGuests);
+    // Entferne den Gast von seinem aktuellen Tisch (falls vorhanden)
+    const updatedTables = tables.map(table => ({
+      ...table,
+      guests: table.guests.filter(guest => guest.id !== pendingGuest.id)
+    }));
+
+    // Füge den Gast zum neuen Tisch hinzu
+    const finalTables = updatedTables.map(table => 
+      table.id === pendingTable.id
+        ? { ...table, guests: [...table.guests, pendingGuest] }
+        : table
+    );
+
+    setTables(finalTables);
+    
+    // Entferne den Gast aus der Liste der nicht zugewiesenen Gäste
+    setGuests(prevGuests => prevGuests.filter(guest => guest.id !== pendingGuest.id));
+
     setShowWarning(false);
     setPendingGuest(null);
     setPendingTable(null);
