@@ -1,170 +1,219 @@
-import React, { useState } from 'react';
-import { Droppable, Draggable } from 'react-beautiful-dnd';
+// App.js
+import React, { useState, useEffect } from 'react';
+import { DragDropContext } from 'react-beautiful-dnd';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSave, faEdit, faTrashAlt, faChair, faUserMinus, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faUserPlus, faPlusCircle, faRandom, faFilePdf, faSun, faMoon, faBars, faChair } from '@fortawesome/free-solid-svg-icons';
+import './index.css';
 import {
-  removeGuestFromTable,
-  updateTableSeats,
-  startEditingTable,
-  saveTableName,
-  removeTable,
-  getCompatibilityColor
+  addGuest,
+  addNewTable,
+  handleGuestKeyDown,
+  handleTableKeyDown,
+  assignRemainingGuests,
+  exportPDF,
+  handleConfirmAddGuest,
+  handleCancelDrop,
+  onDragEnd
 } from './helpers';
+import GuestList from './GuestList';
+import TableList from './TableList';
+import WarningPopup from './WarningPopup';
+import ProgressBar from './ProgressBar';
 
-const TableList = ({ 
-  tables, 
-  setTables, 
-  guests, 
-  setGuests, 
-  compatibility, 
-  setShowWarning, 
-  setWarningMessage, 
-  setPendingGuest, 
-  setPendingTable, 
-  isDarkMode 
-}) => {
-  const [editingTableId, setEditingTableId] = useState(null);
-  const [editingTableName, setEditingTableName] = useState('');
+const WeddingSeatingPlanner = () => {
+  const [guests, setGuests] = useState([]);
+  const [tables, setTables] = useState([
+    { id: 'table1', name: 'Tisch 1', guests: [], seats: 8 },
+    { id: 'table2', name: 'Tisch 2', guests: [], seats: 8 },
+  ]);
+  const [newGuest, setNewGuest] = useState('');
+  const [compatibility, setCompatibility] = useState({});
+  const [newTableName, setNewTableName] = useState('');
+  const [newTableSeats, setNewTableSeats] = useState(8);
+  const [showWarning, setShowWarning] = useState(false);
+  const [warningMessage, setWarningMessage] = useState('');
+  const [pendingGuest, setPendingGuest] = useState(null);
+  const [pendingTable, setPendingTable] = useState(null);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    const totalGuests = guests.length + tables.reduce((sum, table) => sum + table.guests.length, 0);
+    const seatedGuests = tables.reduce((sum, table) => sum + table.guests.length, 0);
+    setProgress(totalGuests > 0 ? (seatedGuests / totalGuests) * 100 : 0);
+  }, [guests, tables]);
+
+  const handleDragEnd = (result) => {
+    onDragEnd(result, guests, setGuests, tables, setTables, compatibility, setShowWarning, setWarningMessage, setPendingGuest, setPendingTable);
+  };
+
+  const handleCancel = () => {
+    handleCancelDrop(setShowWarning, setWarningMessage, setPendingGuest, setPendingTable);
+  };
+
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode);
+  };
 
   return (
-    <div className="w-full">
-      <div className={`p-6 mb-8 ${isDarkMode ? 'bg-gray-800' : 'bg-blue-600'}`}>
-        <h2 className="text-3xl font-bold text-center text-white">
-          <FontAwesomeIcon icon={faUsers} className="mr-3" />
-          Tischplan
-        </h2>
-      </div>
-      <div className="px-6 pb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {tables.map((table) => (
-            <Droppable droppableId={table.id} key={table.id}>
-              {(provided, snapshot) => (
-                <div
-                  ref={provided.innerRef}
-                  {...provided.droppableProps}
-                  className={`rounded-xl shadow-lg transition-all duration-300 ${
-                    isDarkMode ? 'bg-gray-700 text-white' : 'bg-white'
-                  } ${snapshot.isDraggingOver ? 'ring-4 ring-blue-400 ring-opacity-50' : ''}`}
-                >
-                  <div className={`p-4 rounded-t-xl ${isDarkMode ? 'bg-blue-700' : 'bg-blue-600'}`}>
-                    {editingTableId === table.id ? (
-                      <div className="flex items-center w-full">
+    <DragDropContext onDragEnd={handleDragEnd}>
+      <div className={`min-h-screen ${isDarkMode ? 'dark' : ''}`} data-theme={isDarkMode ? 'dark' : 'light'}>
+        {/* Navbar */}
+        <nav className="navbar bg-primary text-primary-content sticky top-0 z-50">
+          <div className="flex-1">
+            <button className="btn btn-ghost normal-case text-xl" onClick={() => setSidebarOpen(!sidebarOpen)}>
+              <FontAwesomeIcon icon={faBars} className="mr-2" />
+              Eleganter Tischplaner
+            </button>
+          </div>
+          <div className="flex-none">
+            <button onClick={toggleDarkMode} className="btn btn-circle btn-ghost">
+              <FontAwesomeIcon icon={isDarkMode ? faSun : faMoon} size="lg" />
+            </button>
+          </div>
+        </nav>
+
+        <div className="drawer drawer-mobile">
+          <input id="my-drawer" type="checkbox" className="drawer-toggle" checked={sidebarOpen} onChange={() => setSidebarOpen(!sidebarOpen)} />
+          <div className="drawer-content flex flex-col">
+            {/* Main content */}
+            <main className="flex-1 p-6 bg-base-100">
+              <div className="container mx-auto">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                  <div className="card bg-base-100 shadow-xl overflow-hidden">
+                    <h2 className="text-2xl font-bold p-4 bg-primary text-white">Gäste hinzufügen</h2>
+                    <div className="card-body">
+                      <div className="flex space-x-2">
                         <input
-                          className={`flex-grow p-2 rounded-lg mr-2 ${
-                            isDarkMode ? 'bg-gray-600 text-white' : 'bg-white text-gray-800'
-                          } focus:outline-none focus:ring-2 focus:ring-blue-400`}
+                          className="input input-bordered flex-grow bg-white dark:bg-gray-700 border-primary focus:border-primary focus:ring-2 focus:ring-primary"
                           type="text"
-                          value={editingTableName}
-                          onChange={(e) => setEditingTableName(e.target.value)}
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter') {
-                              saveTableName(table.id, editingTableName, tables, setTables, setEditingTableId, setEditingTableName);
-                            }
-                          }}
+                          value={newGuest}
+                          onChange={(e) => setNewGuest(e.target.value)}
+                          onKeyDown={(e) => handleGuestKeyDown(e, newGuest, guests, setGuests, setCompatibility, setNewGuest)}
+                          placeholder="Neuen Gast hinzufügen"
                         />
-                        <button
-                          className="bg-white text-blue-600 p-2 rounded-lg hover:bg-blue-100 transition duration-300"
-                          onClick={() => saveTableName(table.id, editingTableName, tables, setTables, setEditingTableId, setEditingTableName)}
+                        <button 
+                          className="btn btn-primary"
+                          onClick={() => addGuest(newGuest, guests, setGuests, setNewGuest, setCompatibility)}
                         >
-                          <FontAwesomeIcon icon={faSave} />
+                          <FontAwesomeIcon icon={faUserPlus} className="mr-2" />
+                          Hinzufügen
                         </button>
                       </div>
-                    ) : (
-                      <div className="flex justify-between items-center">
-                        <h3 className="text-2xl font-bold text-white">{table.name}</h3>
-                        <div className="flex space-x-2">
-                          <button
-                            className="text-white hover:text-blue-200 transition duration-300"
-                            onClick={() => startEditingTable(table.id, table.name, setEditingTableId, setEditingTableName)}
-                            title="Tisch umbenennen"
-                          >
-                            <FontAwesomeIcon icon={faEdit} />
-                          </button>
-                          <button
-                            className="text-white hover:text-red-300 transition duration-300"
-                            onClick={() => removeTable(table.id, tables, setTables, guests, setGuests)}
-                            title="Tisch entfernen"
-                          >
-                            <FontAwesomeIcon icon={faTrashAlt} />
-                          </button>
-                        </div>
-                      </div>
-                    )}
+                    </div>
                   </div>
-                  <div className="p-4">
-                    <div className="flex items-center mb-4">
-                      <span className="mr-2 font-semibold">Sitzplätze:</span>
-                      <input
-                        className={`w-16 p-2 rounded-lg ${
-                          isDarkMode ? 'bg-gray-600 text-white' : 'bg-gray-100'
-                        } focus:outline-none focus:ring-2 focus:ring-blue-400`}
-                        type="number"
-                        value={table.seats}
-                        onChange={(e) => updateTableSeats(table.id, parseInt(e.target.value), tables, setTables)}
-                        min="1"
-                      />
-                    </div>
-                    <div className="space-y-3">
-                      {table.guests.map((guest, index) => (
-                        <Draggable key={guest.id} draggableId={guest.id} index={index}>
-                          {(provided, snapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              className={`flex items-center justify-between p-3 rounded-lg ${
-                                isDarkMode ? 'bg-gray-600' : 'bg-gray-100'
-                              } ${snapshot.isDragging ? 'opacity-75 shadow-lg' : ''} hover:shadow-md transition duration-300`}
-                            >
-                              <div className="flex items-center flex-grow">
-                                <span className="mr-2 font-medium">{guest.name}</span>
-                                <div className="flex">
-                                  {table.guests.map((otherGuest) => {
-                                    if (otherGuest.id === guest.id) return null;
-                                    return (
-                                      <div
-                                        key={otherGuest.id}
-                                        className="w-3 h-3 rounded-full mr-1"
-                                        style={{ backgroundColor: getCompatibilityColor(guest.id, otherGuest.id, compatibility) }}
-                                        title={`Kompatibilität mit ${otherGuest.name}`}
-                                      ></div>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                              <button
-                                className="text-red-500 hover:text-red-600 transition duration-300 p-2 rounded-full hover:bg-red-100"
-                                onClick={() => removeGuestFromTable(table.id, guest.id, tables, setTables, guests, setGuests)}
-                                title="Gast entfernen"
-                              >
-                                <FontAwesomeIcon icon={faUserMinus} />
-                              </button>
-                            </div>
-                          )}
-                        </Draggable>
-                      ))}
-                      {provided.placeholder}
-                    </div>
-                    <div className="mt-4 text-sm font-semibold flex items-center justify-between">
-                      <span>
-                        <FontAwesomeIcon icon={faChair} className="mr-2" />
-                        {table.guests.length}/{table.seats} Plätze belegt
-                      </span>
-                      <span className={`px-3 py-1 rounded-full ${
-                        table.guests.length === table.seats ? 'bg-green-500 text-white' : 'bg-yellow-500 text-white'
-                      }`}>
-                        {table.guests.length === table.seats ? 'Voll' : 'Verfügbar'}
-                      </span>
+
+                  <div className="card bg-base-100 shadow-xl overflow-hidden">
+                    <h2 className="text-2xl font-bold p-4 bg-secondary text-white">Neuen Tisch erstellen</h2>
+                    <div className="card-body">
+                      <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                        <input
+                          className="input input-bordered flex-grow bg-white dark:bg-gray-700 border-secondary focus:border-secondary focus:ring-2 focus:ring-secondary"
+                          type="text"
+                          value={newTableName}
+                          onChange={(e) => setNewTableName(e.target.value)}
+                          onKeyDown={(e) => handleTableKeyDown(e, newTableName, newTableSeats, tables, setTables, setNewTableName, setNewTableSeats)}
+                          placeholder="Neuer Tischname"
+                        />
+                        <div className="flex items-center bg-white dark:bg-gray-700 border border-secondary rounded-md px-2">
+                          <FontAwesomeIcon icon={faChair} className="text-secondary mr-2" />
+                          <input
+                            className="input input-bordered w-16 bg-transparent border-0 focus:ring-0"
+                            type="number"
+                            value={newTableSeats}
+                            onChange={(e) => setNewTableSeats(parseInt(e.target.value))}
+                            min="1"
+                            placeholder="Plätze"
+                          />
+                        </div>
+                        <button 
+                          className="btn btn-secondary text-white"
+                          onClick={() => addNewTable(newTableName, newTableSeats, tables, setTables, setNewTableName, setNewTableSeats)}
+                        >
+                          <FontAwesomeIcon icon={faPlusCircle} className="mr-2" />
+                          Tisch erstellen
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              )}
-            </Droppable>
-          ))}
+
+                <div className="flex flex-col lg:flex-row space-y-8 lg:space-y-0 lg:space-x-8 mb-8">
+                  <GuestList 
+                    guests={guests} 
+                    setGuests={setGuests} 
+                    compatibility={compatibility} 
+                    setCompatibility={setCompatibility}
+                    isDarkMode={isDarkMode}
+                  />
+                  <div className="flex-1 flex flex-col justify-between">
+                    <div className="card bg-base-100 shadow-xl overflow-hidden">
+                      <h2 className="text-2xl font-bold p-4 bg-primary text-white">Aktionen</h2>
+                      <div className="card-body">
+                        <div className="flex flex-col space-y-4">
+                          <button 
+                            className="btn btn-accent btn-block"
+                            onClick={() => assignRemainingGuests(guests, setGuests, tables, setTables, setShowWarning, setWarningMessage, compatibility)}
+                          >
+                            <FontAwesomeIcon icon={faRandom} className="mr-2" />
+                            Automatisch zuordnen
+                          </button>
+                          <button 
+                            className="btn btn-info btn-block"
+                            onClick={() => exportPDF(tables, compatibility)}
+                          >
+                            <FontAwesomeIcon icon={faFilePdf} className="mr-2" />
+                            Als PDF exportieren
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <TableList 
+                  tables={tables} 
+                  setTables={setTables} 
+                  guests={guests} 
+                  setGuests={setGuests} 
+                  compatibility={compatibility} 
+                  setShowWarning={setShowWarning} 
+                  setWarningMessage={setWarningMessage} 
+                  setPendingGuest={setPendingGuest} 
+                  setPendingTable={setPendingTable}
+                  isDarkMode={isDarkMode}
+                />
+
+                <div className="mt-8">
+                  <ProgressBar progress={progress} />
+                </div>
+              </div>
+            </main>
+          </div>
+
+          {/* Sidebar */}
+          <div className="drawer-side">
+            <label htmlFor="my-drawer" className="drawer-overlay"></label> 
+            <ul className="menu p-4 w-80 bg-base-100 text-base-content">
+              <li><a className="text-xl font-bold mb-4">Tischplaner</a></li>
+              <li><a onClick={() => setSidebarOpen(false)}>Dashboard</a></li>
+              {/* Hier können weitere Menüpunkte hinzugefügt werden */}
+            </ul>
+          </div>
         </div>
+
+        {showWarning && (
+          <WarningPopup 
+            message={warningMessage} 
+            handleConfirm={() => handleConfirmAddGuest(pendingTable, pendingGuest, tables, setTables, setGuests, setShowWarning, setPendingGuest, setPendingTable)}
+            handleCancel={handleCancel}
+            isDarkMode={isDarkMode}
+          />
+        )}
       </div>
-    </div>
+    </DragDropContext>
   );
 };
 
-export default TableList;
+export default WeddingSeatingPlanner;

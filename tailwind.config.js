@@ -1,6 +1,6 @@
 module.exports = {
-  purge: ['./src/**/*.{js,jsx,ts,tsx}', './public/index.html'],
-  darkMode: false,
+  content: ['./src/**/*.{js,jsx,ts,tsx}', './public/index.html'],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
@@ -32,5 +32,25 @@ module.exports = {
   variants: {
     extend: {},
   },
-  plugins: [],
-};
+  plugins: [require("daisyui")],
+  daisyui: {
+    themes: [
+      {
+        light: {
+          primary: "#1E3A8A",
+          secondary: "#F59E0B",
+          "base-100": "#F3F4F6",
+          // Fügen Sie hier weitere Farben hinzu, wenn nötig
+        },
+      },
+      {
+        dark: {
+          primary: "#3B82F6",
+          secondary: "#FBBF24",
+          "base-100": "#1F2937",
+          // Fügen Sie hier weitere Farben hinzu, wenn nötig
+        },
+      },
+    ],
+  },
+}

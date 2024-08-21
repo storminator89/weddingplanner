@@ -1,13 +1,75 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap');
+/* index.css */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Playfair+Display:wght@400;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-body {
-  @apply bg-background text-text font-sans;
+@layer base {
+  html {
+    font-family: 'Roboto', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', serif;
+  }
 }
 
-h1, h2, h3, h4, h5, h6 {
-  @apply font-serif;
+@layer components {
+  .btn-primary {
+    @apply bg-primary hover:bg-primary-dark text-primary-content;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary hover:bg-secondary-dark text-secondary-content;
+  }
+
+  .card {
+    @apply bg-base-100 shadow-xl;
+  }
+
+  .input {
+    @apply bg-base-200 border-base-300;
+  }
+}
+
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-base-200;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-primary;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-primary-dark;
+}
+
+/* Smooth scrolling for the whole page */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Transition for theme changes */
+.transition-colors {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Custom styles for drag and drop */
+.dragging {
+  opacity: 0.5;
+  transform: scale(1.05);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.drag-over {
+  @apply border-2 border-dashed border-primary;
 }

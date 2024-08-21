@@ -1,7 +1,8 @@
+// App.js
 import React, { useState, useEffect } from 'react';
 import { DragDropContext } from 'react-beautiful-dnd';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUserPlus, faPlusCircle, faRandom, faFilePdf, faSun, faMoon } from '@fortawesome/free-solid-svg-icons';
+import { faUserPlus, faPlusCircle, faRandom, faFilePdf, faSun, faMoon, faBars, faChair } from '@fortawesome/free-solid-svg-icons';
 import './index.css';
 import {
   addGuest,
@@ -35,6 +36,7 @@ const WeddingSeatingPlanner = () => {
   const [pendingTable, setPendingTable] = useState(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     const totalGuests = guests.length + tables.reduce((sum, table) => sum + table.guests.length, 0);
@@ -56,73 +58,120 @@ const WeddingSeatingPlanner = () => {
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
-      <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-100'} transition-colors duration-300`}>
-        <div className="container mx-auto p-4">
-          <header className={`bg-blue-600 text-white p-6 rounded-t-lg shadow-lg ${isDarkMode ? 'bg-opacity-80' : ''}`}>
-            <div className="flex justify-between items-center">
-              <h1 className="text-4xl font-bold">Eleganter Tischplaner</h1>
-              <button onClick={toggleDarkMode} className="p-2 rounded-full hover:bg-blue-700 transition-colors duration-300">
-                <FontAwesomeIcon icon={isDarkMode ? faSun : faMoon} />
-              </button>
-            </div>
-          </header>
-          <main className={`bg-white shadow-2xl rounded-b-lg overflow-hidden transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : ''}`}>
-            <div className="p-6">
-              <ProgressBar progress={progress} />
-              <div className="mb-8 space-y-4">
-                <div className="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0">
-                  <div className="flex-1 flex">
-                    <input
-                      className={`flex-grow p-3 border rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
-                      type="text"
-                      value={newGuest}
-                      onChange={(e) => setNewGuest(e.target.value)}
-                      onKeyDown={(e) => handleGuestKeyDown(e, newGuest, guests, setGuests, setCompatibility, setNewGuest)}
-                      placeholder="Neuen Gast hinzufügen"
-                    />
-                    <button 
-                      className="bg-blue-500 text-white p-3 rounded-r-lg hover:bg-blue-600 transition duration-300"
-                      onClick={() => addGuest(newGuest, guests, setGuests, setNewGuest, setCompatibility)}
-                    >
-                      <FontAwesomeIcon icon={faUserPlus} className="mr-2" />
-                      Hinzufügen
-                    </button>
+      <div className={`min-h-screen ${isDarkMode ? 'dark' : ''}`} data-theme={isDarkMode ? 'dark' : 'light'}>
+        {/* Navbar */}
+        <nav className="navbar bg-primary text-primary-content sticky top-0 z-50">
+          <div className="flex-1">
+            <button className="btn btn-ghost normal-case text-xl" onClick={() => setSidebarOpen(!sidebarOpen)}>
+              <FontAwesomeIcon icon={faBars} className="mr-2" />
+              Eleganter Tischplaner
+            </button>
+          </div>
+          <div className="flex-none">
+            <button onClick={toggleDarkMode} className="btn btn-circle btn-ghost">
+              <FontAwesomeIcon icon={isDarkMode ? faSun : faMoon} size="lg" />
+            </button>
+          </div>
+        </nav>
+
+        <div className="drawer drawer-mobile">
+          <input id="my-drawer" type="checkbox" className="drawer-toggle" checked={sidebarOpen} onChange={() => setSidebarOpen(!sidebarOpen)} />
+          <div className="drawer-content flex flex-col">
+            {/* Main content */}
+            <main className="flex-1 p-6 bg-base-100">
+              <div className="container mx-auto">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                  <div className="card bg-base-100 shadow-xl overflow-hidden">
+                    <h2 className="text-2xl font-bold p-4 bg-primary text-white">Gäste hinzufügen</h2>
+                    <div className="card-body">
+                      <div className="flex space-x-2">
+                        <input
+                          className="input input-bordered flex-grow bg-base-100 border-primary focus:border-primary focus:ring-2 focus:ring-primary"
+                          type="text"
+                          value={newGuest}
+                          onChange={(e) => setNewGuest(e.target.value)}
+                          onKeyDown={(e) => handleGuestKeyDown(e, newGuest, guests, setGuests, setCompatibility, setNewGuest)}
+                          placeholder="Neuen Gast hinzufügen"
+                        />
+                        <button 
+                          className="btn btn-primary"
+                          onClick={() => addGuest(newGuest, guests, setGuests, setNewGuest, setCompatibility)}
+                        >
+                          <FontAwesomeIcon icon={faUserPlus} className="mr-2" />
+                          Hinzufügen
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="card bg-base-100 shadow-xl overflow-hidden">
+                    <h2 className="text-2xl font-bold p-4 bg-secondary text-white">Neuen Tisch erstellen</h2>
+                    <div className="card-body">
+                      <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                        <input
+                          className="input input-bordered flex-grow bg-base-100 border-secondary focus:border-secondary focus:ring-2 focus:ring-secondary"
+                          type="text"
+                          value={newTableName}
+                          onChange={(e) => setNewTableName(e.target.value)}
+                          onKeyDown={(e) => handleTableKeyDown(e, newTableName, newTableSeats, tables, setTables, setNewTableName, setNewTableSeats)}
+                          placeholder="Neuer Tischname"
+                        />
+                        <div className="flex items-center bg-base-100 border border-secondary rounded-md px-2">
+                          <FontAwesomeIcon icon={faChair} className="text-secondary mr-2" />
+                          <input
+                            className="input input-bordered w-16 bg-base-100 border-0 focus:ring-0"
+                            type="number"
+                            value={newTableSeats}
+                            onChange={(e) => setNewTableSeats(parseInt(e.target.value))}
+                            min="1"
+                            placeholder="Plätze"
+                          />
+                        </div>
+                        <button 
+                          className="btn btn-secondary text-white"
+                          onClick={() => addNewTable(newTableName, newTableSeats, tables, setTables, setNewTableName, setNewTableSeats)}
+                        >
+                          <FontAwesomeIcon icon={faPlusCircle} className="mr-2" />
+                          Tisch erstellen
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0">
-                  <input
-                    className={`flex-1 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
-                    type="text"
-                    value={newTableName}
-                    onChange={(e) => setNewTableName(e.target.value)}
-                    onKeyDown={(e) => handleTableKeyDown(e, newTableName, newTableSeats, tables, setTables, setNewTableName, setNewTableSeats)}
-                    placeholder="Neuer Tischname"
+
+                <div className="flex flex-col lg:flex-row space-y-8 lg:space-y-0 lg:space-x-8 mb-8">
+                  <GuestList 
+                    guests={guests} 
+                    setGuests={setGuests} 
+                    compatibility={compatibility} 
+                    setCompatibility={setCompatibility}
+                    isDarkMode={isDarkMode}
                   />
-                  <input
-                    className={`w-24 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
-                    type="number"
-                    value={newTableSeats}
-                    onChange={(e) => setNewTableSeats(parseInt(e.target.value))}
-                    min="1"
-                    placeholder="Sitzplätze"
-                  />
-                  <button 
-                    className="bg-green-500 text-white p-3 rounded-lg hover:bg-green-600 transition duration-300 flex-shrink-0"
-                    onClick={() => addNewTable(newTableName, newTableSeats, tables, setTables, setNewTableName, setNewTableSeats)}
-                  >
-                    <FontAwesomeIcon icon={faPlusCircle} className="mr-2" />
-                    Tisch erstellen
-                  </button>
+                  <div className="flex-1 flex flex-col justify-between">
+                    <div className="card bg-base-100 shadow-xl overflow-hidden">
+                      <h2 className="text-2xl font-bold p-4 bg-primary text-white">Aktionen</h2>
+                      <div className="card-body">
+                        <div className="flex flex-col space-y-4">
+                          <button 
+                            className="btn btn-accent btn-block"
+                            onClick={() => assignRemainingGuests(guests, setGuests, tables, setTables, setShowWarning, setWarningMessage, compatibility)}
+                          >
+                            <FontAwesomeIcon icon={faRandom} className="mr-2" />
+                            Automatisch zuordnen
+                          </button>
+                          <button 
+                            className="btn btn-info btn-block"
+                            onClick={() => exportPDF(tables, compatibility)}
+                          >
+                            <FontAwesomeIcon icon={faFilePdf} className="mr-2" />
+                            Als PDF exportieren
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="flex flex-col lg:flex-row space-y-8 lg:space-y-0 lg:space-x-8">
-                <GuestList 
-                  guests={guests} 
-                  setGuests={setGuests} 
-                  compatibility={compatibility} 
-                  setCompatibility={setCompatibility}
-                  isDarkMode={isDarkMode}
-                />
+
                 <TableList 
                   tables={tables} 
                   setTables={setTables} 
@@ -135,34 +184,33 @@ const WeddingSeatingPlanner = () => {
                   setPendingTable={setPendingTable}
                   isDarkMode={isDarkMode}
                 />
+
+                <div className="mt-8">
+                  <ProgressBar progress={progress} />
+                </div>
               </div>
-              {showWarning && (
-                <WarningPopup 
-                  message={warningMessage} 
-                  handleConfirm={() => handleConfirmAddGuest(pendingTable, pendingGuest, tables, setTables, setGuests, setShowWarning, setPendingGuest, setPendingTable)}
-                  handleCancel={handleCancel}
-                  isDarkMode={isDarkMode}
-                />
-              )}
-              <div className="mt-8 flex flex-col md:flex-row justify-center space-y-4 md:space-y-0 md:space-x-4">
-                <button 
-                  className="bg-yellow-500 text-white px-6 py-3 rounded-lg hover:bg-yellow-600 transition duration-300 flex items-center justify-center"
-                  onClick={() => assignRemainingGuests(guests, setGuests, tables, setTables, setShowWarning, setWarningMessage, compatibility)}
-                >
-                  <FontAwesomeIcon icon={faRandom} className="mr-2" />
-                  Automatisch zuordnen
-                </button>
-                <button 
-                  className="bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 transition duration-300 flex items-center justify-center"
-                  onClick={() => exportPDF(tables, compatibility)}
-                >
-                  <FontAwesomeIcon icon={faFilePdf} className="mr-2" />
-                  Als PDF exportieren
-                </button>
-              </div>
-            </div>
-          </main>
+            </main>
+          </div>
+
+          {/* Sidebar */}
+          <div className="drawer-side">
+            <label htmlFor="my-drawer" className="drawer-overlay"></label> 
+            <ul className="menu p-4 w-80 bg-base-100 text-base-content">
+              <li><a className="text-xl font-bold mb-4">Tischplaner</a></li>
+              <li><a onClick={() => setSidebarOpen(false)}>Dashboard</a></li>
+              {/* Hier können weitere Menüpunkte hinzugefügt werden */}
+            </ul>
+          </div>
         </div>
+
+        {showWarning && (
+          <WarningPopup 
+            message={warningMessage} 
+            handleConfirm={() => handleConfirmAddGuest(pendingTable, pendingGuest, tables, setTables, setGuests, setShowWarning, setPendingGuest, setPendingTable)}
+            handleCancel={handleCancel}
+            isDarkMode={isDarkMode}
+          />
+        )}
       </div>
     </DragDropContext>
   );
