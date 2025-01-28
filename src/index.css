@@ -13,6 +13,10 @@
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Playfair Display', serif;
   }
+
+  body {
+    @apply bg-gradient-to-br from-base-100 to-base-200;
+  }
 }
 
 @layer components {
@@ -25,30 +29,41 @@
   }
 
   .card {
-    @apply bg-base-100 shadow-xl;
+    @apply bg-base-100 shadow-xl backdrop-blur-sm bg-white/80 dark:bg-gray-800/80;
   }
 
   .input {
-    @apply bg-base-200 border-base-300;
+    @apply bg-base-200 border-base-300 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm;
+  }
+
+  .navbar {
+    @apply bg-gradient-to-r from-primary to-secondary text-white backdrop-blur-lg bg-opacity-90;
+  }
+
+  .dropdown-content {
+    @apply backdrop-blur-lg bg-white/90 dark:bg-gray-800/90;
+  }
+
+  .btn {
+    @apply shadow-sm hover:shadow-md transition-all duration-300;
   }
 }
 
-/* Custom scrollbar styles */
+/* Basic scrollbar styles */
 ::-webkit-scrollbar {
-  width: 10px;
+  @apply w-2;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-base-200;
+  @apply bg-transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-primary;
-  border-radius: 5px;
+  @apply bg-primary/20 rounded-full hover:bg-primary/40;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-primary-dark;
+.dark ::-webkit-scrollbar-thumb {
+  @apply bg-primary/30 hover:bg-primary/50;
 }
 
 /* Smooth scrolling for the whole page */
@@ -72,4 +87,29 @@ html {
 
 .drag-over {
   @apply border-2 border-dashed border-primary;
+}
+
+/* Replace the custom scrollbar class with simpler CSS */
+@layer utilities {
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.primary.500') transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: theme('colors.primary.500 / 20%');
+    border-radius: 20px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: theme('colors.primary.500 / 40%');
+  }
 }

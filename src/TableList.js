@@ -40,11 +40,25 @@ const TableList = ({
                 <div
                   ref={provided.innerRef}
                   {...provided.droppableProps}
-                  className={`card bg-base-100 border-2 transition-all duration-300 ${
-                    snapshot.isDraggingOver ? 'border-primary shadow-lg' : 'border-base-300 shadow-md'
-                  } hover:shadow-xl`}
+                  className={`card bg-base-100 relative transform transition-all duration-300 ease-in-out ${
+                    snapshot.isDraggingOver 
+                      ? 'border-primary shadow-lg scale-102 ring-2 ring-primary ring-opacity-50' 
+                      : 'border-base-300 shadow-md hover:shadow-xl hover:scale-101'
+                  }`}
                 >
-                  <div className="card-body p-4">
+                  {table.guests.length > table.seats && (
+                    <div className="absolute -top-2 -right-2 animate-bounce">
+                      <div className="badge badge-error gap-2">
+                        Überbelegt!
+                      </div>
+                    </div>
+                  )}
+                  <div className="card-body p-4 relative">
+                    {table.guests.length >= table.seats && (
+                      <div className="absolute inset-0 bg-error/10 rounded-lg flex items-center justify-center">
+                        <span className="badge badge-error">Tisch ist voll</span>
+                      </div>
+                    )}
                     <div className="flex justify-between items-center mb-2">
                       {editingTableId === table.id ? (
                         <div className="flex items-center w-full">
@@ -111,9 +125,9 @@ const TableList = ({
                               ref={provided.innerRef}
                               {...provided.draggableProps}
                               {...provided.dragHandleProps}
-                              className={`flex items-center justify-between p-2 rounded-lg ${
-                                snapshot.isDragging ? 'bg-base-200 shadow-md' : 'bg-base-100'
-                              } hover:bg-base-200 transition duration-300 border border-base-300`}
+                              className={`flex items-center justify-between p-2 rounded-lg transition-all duration-300 transform ${
+                                snapshot.isDragging ? 'bg-base-200 shadow-md scale-105' : 'bg-base-100 hover:bg-base-200 hover:scale-102'
+                              } border border-base-300`}
                             >
                               <div className="flex items-center flex-grow">
                                 <span className="font-medium">{guest.name}</span>

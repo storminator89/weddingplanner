@@ -1,5 +1,5 @@
 // GuestList.js
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Draggable, Droppable } from 'react-beautiful-dnd';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserCircle, faUserMinus, faThumbsUp, faThumbsDown, faUsers, faSearch, faSortAlphaDown, faSortAlphaUp, faFilter, faTimes, faUserFriends, faUserSlash } from '@fortawesome/free-solid-svg-icons';
@@ -76,6 +76,17 @@ const GuestList = ({ guests, setGuests, compatibility, setCompatibility }) => {
     setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
   };
 
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      if (e.key === 'f' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        document.querySelector('input[type="search"]')?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, []);
+
   const renderGuestItem = (guest, index) => (
     <Draggable key={guest.id} draggableId={guest.id} index={index}>
       {(provided, snapshot) => (
@@ -122,45 +133,63 @@ const GuestList = ({ guests, setGuests, compatibility, setCompatibility }) => {
           </span>
         </h2>
         <div className="p-4 space-y-2">
-          <div className="relative">
+          <div className="relative group">
             <input
-              type="text"
-              placeholder="Gäste suchen..."
-              className="input input-bordered w-full pr-10 pl-10"
+              type="search"
+              placeholder="Gäste suchen... (Strg+F)"
+              className="input input-bordered w-full pl-10 pr-10 transition-all duration-300 focus:ring-2 focus:ring-primary group-hover:ring-1 group-hover:ring-primary"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-            <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+              {filteredAndSortedGuests.length}/{guests.length}
+            </div>
+            <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+              <FontAwesomeIcon 
+                icon={faSearch} 
+                className={`transition-colors duration-300 ${searchTerm ? 'text-primary' : 'text-gray-400'}`} 
+              />
+            </div>
             {searchTerm && (
               <button 
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 hover:text-primary transition-colors duration-300"
                 onClick={() => setSearchTerm('')}
               >
                 <FontAwesomeIcon icon={faTimes} />
               </button>
             )}
           </div>
-          <div className="flex justify-between items-center">
+          <div className="flex flex-wrap gap-2 items-center">
+            <div className="btn-group">
+              <button 
+                className={`btn btn-sm ${filterCompatibility === 'all' ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => setFilterCompatibility('all')}
+              >
+                Alle
+              </button>
+              <button 
+                className={`btn btn-sm ${filterCompatibility === 'compatible' ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => setFilterCompatibility('compatible')}
+              >
+                Kompatibel
+              </button>
+              <button 
+                className={`btn btn-sm ${filterCompatibility === 'incompatible' ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => setFilterCompatibility('incompatible')}
+              >
+                Inkompatibel
+              </button>
+            </div>
             <button 
               className="btn btn-sm btn-ghost"
               onClick={toggleSortOrder}
-              title={sortOrder === 'asc' ? "Absteigend sortieren" : "Aufsteigend sortieren"}
             >
-              <FontAwesomeIcon icon={sortOrder === 'asc' ? faSortAlphaDown : faSortAlphaUp} className="mr-2" />
-              Sortieren
+              <FontAwesomeIcon 
+                icon={sortOrder === 'asc' ? faSortAlphaDown : faSortAlphaUp} 
+                className="mr-2 text-primary"
+              />
+              {sortOrder === 'asc' ? 'A-Z' : 'Z-A'}
             </button>
-            <div className="flex items-center space-x-2">
-              <FontAwesomeIcon icon={faFilter} className="text-gray-400" />
-              <select 
-                className="select select-bordered select-sm"
-                value={filterCompatibility}
-                onChange={(e) => setFilterCompatibility(e.target.value)}
-              >
-                <option value="all">Alle Gäste</option>
-                <option value="compatible">Nur kompatible</option>
-                <option value="incompatible">Nur inkompatible</option>
-              </select>
-            </div>
           </div>
         </div>
         <Droppable droppableId="guestList">
